@@ -11,10 +11,15 @@ import pandas as pd
 import plotly
 
 HERE = Path(__file__).resolve().parent
-DATA_FILE = Path("input-data/Project 1 - DTB/bioreaction_remaining.csv")
-DATA_PATH = next((root / DATA_FILE for root in (HERE, *HERE.parents) if (root / DATA_FILE).is_file()), None)
+DATA_FILE = Path("Project 1 - DTB/bioreaction_remaining.csv")
+SEARCH_PATHS = (
+    root / directory / DATA_FILE
+    for directory in ("input-data", "init_data")
+    for root in (HERE, *HERE.parents)
+)
+DATA_PATH = next((path for path in SEARCH_PATHS if path.is_file()), None)
 if DATA_PATH is None:
-    raise FileNotFoundError(f"Could not find {DATA_FILE} in the project directory or its parents.")
+    raise FileNotFoundError(f"Could not find {DATA_FILE} under input-data or init_data.")
 OUT = HERE.parent / "data_viewer.html"
 
 MEAS = ["vcd", "tcd", "substrate", "byproduct"]

@@ -6,7 +6,7 @@
 
 ## Run the viewers
 
-Use the team's Python environment with NumPy, pandas, Plotly, and ipywidgets. Both viewers look for `input-data/Project 1 - DTB/bioreaction_remaining.csv` in the repository or its parent directories.
+Use the team's Python environment with NumPy, pandas, Plotly, and ipywidgets. Both viewers look for `Project 1 - DTB/bioreaction_remaining.csv` in `input-data/` first and fall back to `init_data/`.
 
 Open the notebook in JupyterLab and run all cells. To build the offline viewer, run this command from the repository root.
 
