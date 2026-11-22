@@ -1,0 +1,11 @@
+# Tested with Python 3.13.9
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.16.3
+scikit-learn==1.7.2
+matplotlib
+jupyter
+nbformat
+requests          # submit cell only
+# torch (CPU) is imported at module load by src/research/byproduct_physics.py but not used for this forecast:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu

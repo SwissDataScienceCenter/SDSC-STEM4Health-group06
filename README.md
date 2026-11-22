@@ -1,140 +1,68 @@
-# SDSC-STEM4Health
+# Decode the Bioreactor: Team 6 final model (leaderboard 6.995)
 
-## Getting started in the SDSC STEM4Health Hackathon
+| VCD | TCD | Substrate | Byproduct | **Mean MAPE** |
+|---:|---:|---:|---:|---:|
+| 6.609 | 6.475 | 6.873 | 8.022 | **6.995** |
 
-Welcome to the SDSC STEM4Health Hackathon! This git repository is your team's shared codebase: use it to keep your code in sync and under version control.
+A self-contained folder: the teaching notebook, all the code it needs, the challenge data and the cached model inputs. Copy or zip the whole folder; nothing outside it is used.
 
-It contains an `environment.yml` file listing the packages your session starts with, including pandas, numpy, scikit-learn, plotly, transformers and LangChain. Apart from that, the repository is yours: organise it however suits your team.
-
-&nbsp;
-
-## 1. Start working
-
-### 1.1 Launch a session
-On your project page, in the **Launchers** section, click the green **Launch** button. Choose **JupyterLab** or **VSCodium**, whichever you prefer.
-
-&nbsp;
-
-### 1.2 Access the input data
-Your session has an `input-data` folder with one subfolder per challenge. Use the data for the challenge your team is working on.
-
-> **Note:** Don't commit the input data to the repository. Read it straight from `input-data`.
-
-&nbsp;
-
-### 1.3 Connect to GitHub
-To push your work, connect your Renku account to your GitHub account (see the [Renku documentation](https://docs.renkulab.io/)). You already have access to the repository we created for your team. It is cloned into your session automatically.
-
-&nbsp;
-
-### 1.4 Organise your repository
-You choose the structure. For example:
+## Quick start
 
 ```bash
-.
-├── environment.yml
-├── notebooks/
-├── src/
-├── outputs/
-└── README.md
+pip install -r requirements.txt
+pip install torch --index-url https://download.pytorch.org/whl/cpu   # imported by one module, not used here
+jupyter notebook final_6995.ipynb     # run all cells, ~30 s
+# or, without the notebook:
+python rebuild.py                     # rebuilds the submitted file and checks it (differences < 1e-13 %)
 ```
 
-Agree on the layout with your team early on. That way everyone knows where to put their files.
+## What the forecast is
 
-&nbsp;
-
-### 1.5 Work with your team using git
-Everyone works in their own session and shares work through the repository:
-
-```bash
-git pull                        # get your teammates' latest changes
-git add <files>
-git commit -m "Short description of your change"
-git push                        # share your changes
-```
-
-Tips:
-- Pull before you start working, and push often.
-- To avoid conflicts, try not to edit the same notebook as a teammate at the same time.
-- Keep large files (data, model weights) out of git in the team-workspace folder.
-
-> **Important:** Anything you don't commit and push is lost when the session shuts down.
-
-&nbsp;
-
-### 1.6 Add or change packages
-**Quick test (temporary):** install a package from a terminal or notebook cell:
-
-```bash
-pip install <package-name>
-```
-
-These packages are lost when the session shuts down.
-
-**Permanent (for the whole team):** add the package to `environment.yml`, then commit and push. Rebuild the session environment from your launcher, and every **new** session will include it.
-
-```yaml
-dependencies:
-  - pandas
-  - <new-conda-package>
-  - pip:
-      - <new-pip-package>
-```
-
-&nbsp;
-
-### 1.7 Use AI coding assistants (optional)
-Your session comes with several AI coding assistants. They all run in the terminal:
-
-| Assistant | Command |
+| Target | Forecast |
 |---|---|
-| GitHub Copilot CLI | `copilot` |
-| Claude Code | `claude` |
-| OpenAI Codex CLI | `codex` |
-| Pi | `pi` |
+| VCD, TCD | (C21² × v4)^(1/3): teammate ensemble C21 blended with the 10-rotation kinetic model v4 |
+| Substrate | C21 unchanged |
+| Byproduct | geometric mean of six members (C11's B1, B2, C; whole-curve members K4, K6; amount curve A6), then day 13 × exp(−0.058), then × exp(−0.5 · batch offset predicted from the pH-controller base volume) |
 
-1. Open a **Terminal** in your session.
-2. Run the command for the assistant you want to use, for example:
-   ```bash
-   copilot
-   ```
-3. When prompted, sign in with your own account or API key for that tool. Access and any usage costs go through your own account.
+The notebook explains each step with the theory behind it, figures, the cross-validation evidence and exercises.
 
-> **Note:** These sign-ins are separate from your Renku login. Sign-ins may not survive a session shutdown, so you might need to sign in again.
+## Folder layout
 
-&nbsp;
+```
+DTB_Team6_6995/
+├── final_6995.ipynb          teaching notebook (start here)
+├── rebuild.py                rebuild the submission without the notebook
+├── requirements.txt
+├── README.md
+├── docs/RESEARCH_LOG.md      full trial history, including what did not work
+├── input-data/Project 1 - DTB/
+│   ├── bioreaction_remaining.csv     challenge data
+│   └── bioreaction_template.csv      submission template (used by the v4 refit)
+└── src/
+    ├── dtb/                  helper package for the notebook
+    │   ├── data.py           loading, controller events, base-volume profile
+    │   ├── metrics.py        MAPE, best constant forecasts, paired comparisons
+    │   ├── cv.py             out-of-fold tables, nested ablation, leaderboard noise
+    │   ├── pipeline.py       the forecast step by step, leaderboard history, submit
+    │   └── plots.py          all figures
+    ├── research/             research code the pipeline calls (copied from the analysis folder)
+    │   ├── final_6995.py     the whole forecast in one script (used by rebuild.py)
+    │   ├── final_7026.py     v4 loader and byproduct members B1, B2, C, K4, K6
+    │   ├── curve_member.py, byproduct_*.py, kinetic_trials.py, ...   member code and shared modules
+    │   ├── export_v4_rotated.py (+ export_v4_substrate, export_v3_mape, score_mape)   v4 refit
+    │   ├── C21.csv                          INPUT: teammate C21 ensemble (not rebuilt here)
+    │   ├── official_candidate_v4_rotated.csv  cached v4 (refit ~10 min, see below)
+    │   ├── attempt_v4third_cells.csv        the submitted file (reference for the checks)
+    │   ├── team_benchmark_split.csv
+    │   └── byproduct_kit/    kit.py, batch inputs and cached out-of-fold predictions
+    └── c11/src/              team C11 library (imported as package `src`)
+```
 
-### 1.8 Change your compute resources
-If you need more CPU, or more memory or a GPU:
+**Why the helper package is called `dtb` and not `src`:** the C11 library is imported as a package named `src`, so a second `src` package would collide.
 
-1. **Pause** your session (top-left corner). Your files and changes are kept.
-2. From the dropdown on the launcher button, choose **Modify session resources**.
-3. Select a larger resource class and confirm.
-4. **Resume** the session.
+## Notes
 
-To change the resources for all future sessions, edit the **Default Resource Class** in your launcher (click the pencil icon). To change them for a single new session, use the dropdown next to **Launch** and choose **Custom launch**.
-
-See the [Renku documentation](https://docs.renkulab.io/en/latest/docs/users/compute/guides/select-compute-resources-for-session/) for details.
-
-&nbsp;
-
-## 2. Pause or shut down your session
-
-Sessions keep running when you close your browser. Please free up resources when you finish:
-
-* **Pause session** (top-left corner): your workspace is kept for two weeks. Sessions also pause automatically after 30 minutes of inactivity.
-
-![Pause button](https://raw.githubusercontent.com/SwissDataScienceCenter/renku-outreach/refs/heads/main/tutorial/pause_button.jpeg)
-
-&nbsp;
-
-* **Shut down session** (top-left corner): only work you have **committed and pushed** to the repository is kept. Everything else is lost.
-
-![Shut down button](https://raw.githubusercontent.com/SwissDataScienceCenter/renku-outreach/refs/heads/main/tutorial/shutdown_button.jpeg)
-
-> **Important:** Even paused sessions can end unexpectedly. **Commit and push regularly.**
-
-&nbsp;
-
-## Need help?
-Ask the SDSC coordinators or the Renku team on site, or write to `hello@renku.io` with the subject *[SDSC STEM4Health] Your topic*.
+- **Cached inputs.** The out-of-fold predictions (`byproduct_kit/oof_with_amount_curves.csv`) take hours to recompute and are loaded from file. v4 is loaded from `official_candidate_v4_rotated.csv`. To refit it (~10 min), run `F.F7026.v4_rotated(force=True)` with `src/research` on the path.
+- **C21 is an input.** It comes from teammates and is not rebuilt here.
+- **Changes against the original workspace:** in the copies, `byproduct_kit/kit.py` and `run_c11_local.py` locate the data and the C11 library inside this folder, and `dtb/__init__.py` points to `src/research`. No modelling code was changed.
+- **Submitting.** The last notebook cell submits to the leaderboard only if `SUBMIT = True`. Every call is a real attempt.
